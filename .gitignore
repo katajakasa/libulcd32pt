@@ -1,0 +1,6 @@
+*.depend
+*.layout
+obj/
+lib/
+include/rs232.h
+src/rs232.c
