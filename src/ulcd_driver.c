@@ -345,7 +345,7 @@ uint16_t alloc_color(float r, float g, float b) {
     uint8_t _r = 31 * clamp(r, 1.0);
     uint8_t _g = 63 * clamp(g, 1.0);
     uint8_t _b = 31 * clamp(b, 1.0);
-    out = (_r << 11) | (_g << 6) | (_b);
+    out = (_r << 11) | (_g << 5) | (_b);
     return out;
 }
 
