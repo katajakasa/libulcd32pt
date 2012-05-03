@@ -182,12 +182,15 @@ void ulcd_wait_event(ulcd_dev *dev, ulcd_event *event) {
     read_word(dev);
 }
 
-// Write stuff to buffer for later rendering
+// Draw stuff
 
-int ulcd_blit_buf(unsigned char* buf,
-                  uint16_t x, uint16_t y,
-                  uint16_t w, uint16_t h,
-                  const unsigned char* data) {
+int ulcd_blit(ulcd_dev *dev,
+              uint16_t x, uint16_t y,
+              uint16_t w, uint16_t h,
+              const unsigned char* data) {
+
+    unsigned char buf[10];
+
     buf[0] = 0x49;
     buf[1] = x >> 8;
     buf[2] = x & 0xFF;
@@ -198,76 +201,10 @@ int ulcd_blit_buf(unsigned char* buf,
     buf[7] = h >> 8;
     buf[8] = h & 0xFF;
     buf[9] = 0x10;
-    memcpy(buf+10, data, w*h*2);
-    return w*h*2 + 10;
-}
 
-int ulcd_draw_line_buf(unsigned char *buf,
-                       uint16_t x0, uint16_t y0,
-                       uint16_t x1, uint16_t y1,
-                       uint16_t color) {
-    buf[0] = 0x4C;
-    buf[1] = x0 >> 8;
-    buf[2] = x0 & 0xFF;
-    buf[3] = y0 >> 8;
-    buf[4] = y0 & 0xFF;
-    buf[5] = x1 >> 8;
-    buf[6] = x1 & 0xFF;
-    buf[7] = y1 >> 8;
-    buf[8] = y1 & 0xFF;
-    buf[9] = color >> 8;
-    buf[10] = color & 0xFF;
-    return 11;
-}
+    SendBuf(dev->port, buf, 10);
+    SendBuf(dev->port, (unsigned char*)data, w*h*2);
 
-int ulcd_draw_rect_buf(unsigned char *buf,
-                       uint16_t x0, uint16_t y0,
-                       uint16_t x1, uint16_t y1,
-                       uint16_t color) {
-    buf[0] = 0x72;
-    buf[1] = x0 >> 8;
-    buf[2] = x0 & 0xFF;
-    buf[3] = y0 >> 8;
-    buf[4] = y0 & 0xFF;
-    buf[5] = x1 >> 8;
-    buf[6] = x1 & 0xFF;
-    buf[7] = y1 >> 8;
-    buf[8] = y1 & 0xFF;
-    buf[9] = color >> 8;
-    buf[10] = color & 0xFF;
-    return 11;
-}
-
-int ulcd_draw_circle_buf(unsigned char *buf,
-                         uint16_t x, uint16_t y,
-                         uint16_t radius,
-                         uint16_t color) {
-    buf[0] = 0x43;
-    buf[1] = x >> 8;
-    buf[2] = x & 0xFF;
-    buf[3] = y >> 8;
-    buf[4] = y & 0xFF;
-    buf[5] = radius >> 8;
-    buf[6] = radius & 0xFF;
-    buf[7] = color >> 8;
-    buf[8] = color & 0xFF;
-    return 9;
-}
-
-int ulcd_pen_style_buf(unsigned char* buf, int style) {
-    buf[0] = 0x70;
-    buf[1] = style;
-    return 2;
-}
-
-// Draw stuff
-
-int ulcd_blit(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const unsigned char* data) {
-    // Get command data and send it to panel.
-    int sz = w*h*2 + 10;
-    unsigned char buf[sz];
-    ulcd_blit_buf(buf, x, y, w, h, data);
-    SendBuf(dev->port, buf, sz);
     if(!check_result(dev, "Error while blitting.")) {
         return 0;
     }
@@ -279,9 +216,20 @@ int ulcd_draw_line(ulcd_dev *dev,
                    uint16_t x1, uint16_t y1,
                    uint16_t color) {
 
-    // Get command data and send it to panel.
     unsigned char buf[11];
-    ulcd_draw_line_buf(buf, x0, y0, x1, y1, color);
+
+    buf[0] = 0x4C;
+    buf[1] = x0 >> 8;
+    buf[2] = x0 & 0xFF;
+    buf[3] = y0 >> 8;
+    buf[4] = y0 & 0xFF;
+    buf[5] = x1 >> 8;
+    buf[6] = x1 & 0xFF;
+    buf[7] = y1 >> 8;
+    buf[8] = y1 & 0xFF;
+    buf[9] = color >> 8;
+    buf[10] = color & 0xFF;
+
     SendBuf(dev->port, buf, 11);
     if(!check_result(dev, "Error while drawing line.")) {
         return 0;
@@ -294,9 +242,20 @@ int ulcd_draw_rect(ulcd_dev *dev,
                    uint16_t x1, uint16_t y1,
                    uint16_t color) {
 
-    // Get command data and send it to panel.
     unsigned char buf[11];
-    ulcd_draw_rect_buf(buf, x0, y0, x1, y1, color);
+
+    buf[0] = 0x72;
+    buf[1] = x0 >> 8;
+    buf[2] = x0 & 0xFF;
+    buf[3] = y0 >> 8;
+    buf[4] = y0 & 0xFF;
+    buf[5] = x1 >> 8;
+    buf[6] = x1 & 0xFF;
+    buf[7] = y1 >> 8;
+    buf[8] = y1 & 0xFF;
+    buf[9] = color >> 8;
+    buf[10] = color & 0xFF;
+
     SendBuf(dev->port, buf, 11);
     if(!check_result(dev, "Error while drawing rectangle.")) {
         return 0;
@@ -308,9 +267,16 @@ int ulcd_draw_circle(ulcd_dev *dev,
                      uint16_t x, uint16_t y,
                      uint16_t radius,
                      uint16_t color) {
-    // Get command data and send it to panel.
     unsigned char buf[9];
-    ulcd_draw_circle_buf(buf, x, y, radius, color);
+    buf[0] = 0x43;
+    buf[1] = x >> 8;
+    buf[2] = x & 0xFF;
+    buf[3] = y >> 8;
+    buf[4] = y & 0xFF;
+    buf[5] = radius >> 8;
+    buf[6] = radius & 0xFF;
+    buf[7] = color >> 8;
+    buf[8] = color & 0xFF;
     SendBuf(dev->port, buf, 9);
     if(!check_result(dev, "Error while drawing circle.")) {
         return 0;
@@ -319,11 +285,47 @@ int ulcd_draw_circle(ulcd_dev *dev,
 }
 
 int ulcd_pen_style(ulcd_dev *dev, int style) {
-    // Get command data and send it
     unsigned char buf[2];
-    ulcd_pen_style_buf(buf, style);
+
+    buf[0] = 0x70;
+    buf[1] = style;
+
     SendBuf(dev->port, buf, 2);
     if(!check_result(dev, "Pen style change failed.")) {
+        return 0;
+    }
+    return 1;
+}
+
+int ulcd_draw_text(ulcd_dev *dev,
+                   const char* text,
+                   int x, int y,
+                   int font,
+                   uint16_t color) {
+
+    // Init
+    int textlen = strlen(text);
+    unsigned char buf[10];
+
+    // Commands
+    buf[0] = 0x53;
+    buf[1] = x >> 8;
+    buf[2] = x & 0xFF;
+    buf[3] = y >> 8;
+    buf[4] = y & 0xFF;
+    buf[5] = font & 0xFF;
+    buf[6] = color >> 8;
+    buf[7] = color & 0xFF;
+    buf[8] = 0x01;
+    buf[9] = 0x01;
+
+    // Send data
+    SendBuf(dev->port, buf, 10);
+    SendBuf(dev->port, (unsigned char*)text, textlen);
+    SendByte(dev->port, 0x00);
+
+    // Check results
+    if(!check_result(dev, "Text drawing failed.")) {
         return 0;
     }
     return 1;
@@ -340,9 +342,9 @@ float clamp(float v, float to) {
 
 uint16_t alloc_color(float r, float g, float b) {
     uint16_t out;
-    uint8_t _r = 32 * clamp(r, 1.0);
-    uint8_t _g = 64 * clamp(g, 1.0);
-    uint8_t _b = 32 * clamp(b, 1.0);
+    uint8_t _r = 31 * clamp(r, 1.0);
+    uint8_t _g = 63 * clamp(g, 1.0);
+    uint8_t _b = 31 * clamp(b, 1.0);
     out = (_r << 11) | (_g << 6) | (_b);
     return out;
 }

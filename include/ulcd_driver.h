@@ -58,20 +58,13 @@ int ulcd_toggle_backlight(ulcd_dev *dev, int toggle);
 void ulcd_get_event(ulcd_dev *dev, ulcd_event *event);
 void ulcd_wait_event(ulcd_dev *dev, ulcd_event *event);
 
-// Commands to buffer
-
-int ulcd_blit_buf(unsigned char* buf, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const unsigned char* data);
-int ulcd_draw_line_buf(unsigned char* buf, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
-int ulcd_draw_rect_buf(unsigned char* buf, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
-int ulcd_draw_circle_buf(unsigned char* buf, uint16_t x, uint16_t y, uint16_t radius, uint16_t color);
-int ulcd_pen_style_buf(unsigned char* buf, int style);
-
 // Drawing
 
 int ulcd_blit(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const unsigned char* data);
 int ulcd_draw_line(ulcd_dev *dev, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
 int ulcd_draw_rect(ulcd_dev *dev, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
 int ulcd_draw_circle(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t radius, uint16_t color);
+int ulcd_draw_text(ulcd_dev *dev, const char* text, int x, int y, int font, uint16_t color);
 int ulcd_pen_style(ulcd_dev *dev, int style);
 uint16_t alloc_color(float r, float g, float b);
 
