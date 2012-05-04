@@ -8,11 +8,7 @@
 #ifndef __SERIAL_H
 #define __SERIAL_H
 
-#ifdef LINUX
-#include <fcntl.h>
-#include <termios.h>
-#include <errno.h>
-#else
+#ifndef LINUX
 #include <windows.h>
 #endif
 
@@ -28,6 +24,7 @@ enum SERIAL_SPEED {
     SERIAL_57600,
     SERIAL_115200,
     SERIAL_128000,
+    SERIAL_230400,
     SERIAL_256000,
 };
 

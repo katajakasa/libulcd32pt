@@ -7,9 +7,14 @@
 
 #include "serial.h"
 
+#ifdef LINUX
+#include <fcntl.h>
+#include <termios.h>
+#include <errno.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 char error_str[256];
 

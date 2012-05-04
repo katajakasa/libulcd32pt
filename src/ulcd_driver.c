@@ -2,12 +2,13 @@
 #include "serial.h"
 
 #ifdef LINUX
-#imclude <unistd.h>
+#include <unistd.h>
 #else
 #include <windows.h>
 #endif
 
 #include <stdio.h>
+#include <string.h>
 
 char errorstr[256];
 
