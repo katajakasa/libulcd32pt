@@ -405,6 +405,11 @@ int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen) {
 
     // Get much data! MMMMmmmm.... daaaataaaaa....
     while(run) {
+        if(pos > buflen) {
+            sprintf(errorstr, "Directory listing too long.");
+            break;
+        }
+
         in = readchar(dev->port);
         if(in == 0x06 && last == 0) {
             return pos;
