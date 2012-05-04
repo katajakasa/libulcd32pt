@@ -7,25 +7,22 @@
 #include <windows.h>
 #endif
 
+#include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 
 char errorstr[256];
-
-void sleep(int ms) {
-#ifdef LINUX
-    usleep(ms*1000);
-#else
-    Sleep(ms);
-#endif
-}
 
 // Helper functions for serial port stuff
 
 unsigned char readchar(serial_port *port) {
     unsigned char c;
     while(serial_read(port, (char*)&c, 1) <= 0) {
-        sleep(1);
+#ifdef LINUX
+        usleep(1000);
+#else
+        Sleep(1);
+#endif
     }
     return c;
 }
