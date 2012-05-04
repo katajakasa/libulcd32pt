@@ -9,8 +9,10 @@ extern "C" {
 
 // Device stuff
 
+typedef struct serial_port serial_port;
+
 typedef struct {
-    int port;
+    serial_port *port;
     char name[16];
     int type;
     int w,h;
@@ -53,7 +55,7 @@ typedef struct {
 
 // Init and deinit functions
 
-ulcd_dev* ulcd_init(int portno);
+ulcd_dev* ulcd_init(const char* device);
 void ulcd_close(ulcd_dev *dev);
 
 // Utility stuff
@@ -83,7 +85,7 @@ int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen);
 
 // Drawing
 
-int ulcd_blit(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const unsigned char* data);
+int ulcd_blit(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char* data);
 int ulcd_draw_line(ulcd_dev *dev, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
 int ulcd_draw_rect(ulcd_dev *dev, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
 int ulcd_draw_circle(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t radius, uint16_t color);

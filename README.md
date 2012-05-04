@@ -3,8 +3,7 @@ libulcd32pt
 
 About
 -----
-A simple library for running uLCD-32PT LCD touch screen. Note: requires library from 
-http://www.teuniz.net/RS-232/
+A simple library for running uLCD-32PT LCD touch screen. 
 
 License
 -------

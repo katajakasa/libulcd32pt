@@ -1,11 +1,13 @@
 #include "ulcd_driver.h"
-#include "rs232.h"
+#include "serial.h"
 
 #ifdef LINUX
 #imclude <unistd.h>
 #else
 #include <windows.h>
 #endif
+
+#include <stdio.h>
 
 char errorstr[256];
 
@@ -17,12 +19,18 @@ void sleep(int ms) {
 #endif
 }
 
-unsigned char readchar(int port) {
+// Helper functions for serial port stuff
+
+unsigned char readchar(serial_port *port) {
     unsigned char c;
-    while(!PollComport(port, &c, 1)) {
+    while(serial_read(port, (char*)&c, 1) <= 0) {
         sleep(1);
     }
     return c;
+}
+
+void writechar(serial_port *port, unsigned char c) {
+    serial_write(port, (char*)&c, 1);
 }
 
 int16_t read_word(ulcd_dev *dev) {
@@ -37,6 +45,8 @@ int check_result(ulcd_dev *dev, const char* errtext) {
     }
     return 1;
 }
+
+// Helper functions for interpreting the display stuff
 
 int get_res_by_code(unsigned char code) {
     switch(code) {
@@ -63,32 +73,35 @@ void set_devname_by_type(ulcd_dev *dev) {
     sprintf(dev->name, "Unknown device");
 }
 
-ulcd_dev* ulcd_init(int portno) {
+// The LCD control functions
+
+ulcd_dev* ulcd_init(const char* device) {
     // Open device
-    if(OpenComport(portno, 115200)) {
+    serial_port *ser = serial_open(device, SERIAL_115200);
+    if(!ser) {
         sprintf(errorstr, "Error while opening serial port.");
         return 0;
     }
 
     // Clear buffer
-    unsigned char tmp[4096];
-    PollComport(portno, tmp, 4096);
+    char tmp[4096];
+    serial_read(ser, tmp, 4096);
 
     // Allocate memory
     ulcd_dev *dev = (ulcd_dev*)malloc(sizeof(ulcd_dev));
-    dev->port = portno;
+    dev->port = ser;
     memset(dev->name, 0, 16);
 
     // Init panel
-    SendByte(dev->port, 0x55);
+    writechar(dev->port, 0x55);
     if(!check_result(dev, "Panel initialization failed.")) {
         free(dev);
         return 0;
     }
 
     // Version information request
-    SendByte(dev->port, 0x56);
-    SendByte(dev->port, 0x00);
+    writechar(dev->port, 0x56);
+    writechar(dev->port, 0x00);
 
     // Read version information
     dev->type = readchar(dev->port);
@@ -99,18 +112,18 @@ ulcd_dev* ulcd_init(int portno) {
     set_devname_by_type(dev);
 
     // Set touch region
-    SendByte(dev->port, 0x59);
-    SendByte(dev->port, 0x05);
-    SendByte(dev->port, 0x02);
+    writechar(dev->port, 0x59);
+    writechar(dev->port, 0x05);
+    writechar(dev->port, 0x02);
     if(!check_result(dev, "Touch region reset failed.")) {
         free(dev);
         return 0;
     }
 
     // Enable touch events
-    SendByte(dev->port, 0x59);
-    SendByte(dev->port, 0x05);
-    SendByte(dev->port, 0x00);
+    writechar(dev->port, 0x59);
+    writechar(dev->port, 0x05);
+    writechar(dev->port, 0x00);
     if(!check_result(dev, "Enabling touch events failed.")) {
         free(dev);
         return 0;
@@ -122,12 +135,12 @@ ulcd_dev* ulcd_init(int portno) {
 
 void ulcd_close(ulcd_dev *dev) {
     if(dev == 0) return;
-    CloseComport(dev->port);
+    serial_close(dev->port);
     free(dev);
 }
 
 int ulcd_clear(ulcd_dev *dev) {
-    SendByte(dev->port, 0x45);
+    writechar(dev->port, 0x45);
     return check_result(dev, "Clear screen failed.");
 }
 
@@ -136,30 +149,30 @@ char* ulcd_get_error_str() {
 }
 
 int ulcd_toggle_power(ulcd_dev *dev, int toggle) {
-    SendByte(dev->port, 0x59);
-    SendByte(dev->port, 0x03);
-    SendByte(dev->port, (toggle > 0) ? 1 : 0);
+    writechar(dev->port, 0x59);
+    writechar(dev->port, 0x03);
+    writechar(dev->port, (toggle > 0) ? 1 : 0);
     return check_result(dev, "Backlight toggling failed.");
 }
 
 int ulcd_toggle_backlight(ulcd_dev *dev, int toggle) {
-    SendByte(dev->port, 0x59);
-    SendByte(dev->port, 0x00);
-    SendByte(dev->port, (toggle > 0) ? 1 : 0);
+    writechar(dev->port, 0x59);
+    writechar(dev->port, 0x00);
+    writechar(dev->port, (toggle > 0) ? 1 : 0);
     return check_result(dev, "Backlight toggling failed.");
 }
 
 void ulcd_get_event(ulcd_dev *dev, ulcd_event *event) {
     // Get type
-    SendByte(dev->port, 0x6F);
-    SendByte(dev->port, 0x04);
+    writechar(dev->port, 0x6F);
+    writechar(dev->port, 0x04);
     event->type = read_word(dev);
     read_word(dev);
 
     // If type is valid, get coords
     if(event->type > 0) {
-        SendByte(dev->port, 0x6F);
-        SendByte(dev->port, 0x05);
+        writechar(dev->port, 0x6F);
+        writechar(dev->port, 0x05);
         event->x = read_word(dev);
         event->y = read_word(dev);
     } else {
@@ -170,14 +183,14 @@ void ulcd_get_event(ulcd_dev *dev, ulcd_event *event) {
 
 void ulcd_wait_event(ulcd_dev *dev, ulcd_event *event) {
     // Get coords
-    SendByte(dev->port, 0x6F);
-    SendByte(dev->port, 0x00);
+    writechar(dev->port, 0x6F);
+    writechar(dev->port, 0x00);
     event->x = read_word(dev);
     event->y = read_word(dev);
 
     // Get type
-    SendByte(dev->port, 0x6F);
-    SendByte(dev->port, 0x04);
+    writechar(dev->port, 0x6F);
+    writechar(dev->port, 0x04);
     event->type = read_word(dev);
     read_word(dev);
 }
@@ -187,9 +200,9 @@ void ulcd_wait_event(ulcd_dev *dev, ulcd_event *event) {
 int ulcd_blit(ulcd_dev *dev,
               uint16_t x, uint16_t y,
               uint16_t w, uint16_t h,
-              const unsigned char* data) {
+              const char* data) {
 
-    unsigned char buf[10];
+    char buf[10];
 
     buf[0] = 0x49;
     buf[1] = x >> 8;
@@ -202,8 +215,8 @@ int ulcd_blit(ulcd_dev *dev,
     buf[8] = h & 0xFF;
     buf[9] = 0x10;
 
-    SendBuf(dev->port, buf, 10);
-    SendBuf(dev->port, (unsigned char*)data, w*h*2);
+    serial_write(dev->port, buf, 10);
+    serial_write(dev->port, data, w*h*2);
 
     if(!check_result(dev, "Error while blitting.")) {
         return 0;
@@ -216,7 +229,7 @@ int ulcd_draw_line(ulcd_dev *dev,
                    uint16_t x1, uint16_t y1,
                    uint16_t color) {
 
-    unsigned char buf[11];
+    char buf[11];
 
     buf[0] = 0x4C;
     buf[1] = x0 >> 8;
@@ -230,7 +243,7 @@ int ulcd_draw_line(ulcd_dev *dev,
     buf[9] = color >> 8;
     buf[10] = color & 0xFF;
 
-    SendBuf(dev->port, buf, 11);
+    serial_write(dev->port, buf, 11);
     if(!check_result(dev, "Error while drawing line.")) {
         return 0;
     }
@@ -242,7 +255,7 @@ int ulcd_draw_rect(ulcd_dev *dev,
                    uint16_t x1, uint16_t y1,
                    uint16_t color) {
 
-    unsigned char buf[11];
+    char buf[11];
 
     buf[0] = 0x72;
     buf[1] = x0 >> 8;
@@ -256,7 +269,7 @@ int ulcd_draw_rect(ulcd_dev *dev,
     buf[9] = color >> 8;
     buf[10] = color & 0xFF;
 
-    SendBuf(dev->port, buf, 11);
+    serial_write(dev->port, buf, 11);
     if(!check_result(dev, "Error while drawing rectangle.")) {
         return 0;
     }
@@ -267,7 +280,7 @@ int ulcd_draw_circle(ulcd_dev *dev,
                      uint16_t x, uint16_t y,
                      uint16_t radius,
                      uint16_t color) {
-    unsigned char buf[9];
+    char buf[9];
     buf[0] = 0x43;
     buf[1] = x >> 8;
     buf[2] = x & 0xFF;
@@ -277,7 +290,7 @@ int ulcd_draw_circle(ulcd_dev *dev,
     buf[6] = radius & 0xFF;
     buf[7] = color >> 8;
     buf[8] = color & 0xFF;
-    SendBuf(dev->port, buf, 9);
+    serial_write(dev->port, buf, 9);
     if(!check_result(dev, "Error while drawing circle.")) {
         return 0;
     }
@@ -285,12 +298,12 @@ int ulcd_draw_circle(ulcd_dev *dev,
 }
 
 int ulcd_pen_style(ulcd_dev *dev, int style) {
-    unsigned char buf[2];
+    char buf[2];
 
     buf[0] = 0x70;
     buf[1] = style;
 
-    SendBuf(dev->port, buf, 2);
+    serial_write(dev->port, buf, 2);
     if(!check_result(dev, "Pen style change failed.")) {
         return 0;
     }
@@ -305,7 +318,7 @@ int ulcd_draw_text(ulcd_dev *dev,
 
     // Init
     int textlen = strlen(text);
-    unsigned char buf[10];
+    char buf[10];
 
     // Commands
     buf[0] = 0x53;
@@ -320,9 +333,9 @@ int ulcd_draw_text(ulcd_dev *dev,
     buf[9] = 0x01;
 
     // Send data
-    SendBuf(dev->port, buf, 10);
-    SendBuf(dev->port, (unsigned char*)text, textlen);
-    SendByte(dev->port, 0x00);
+    serial_write(dev->port, buf, 10);
+    serial_write(dev->port, text, textlen);
+    writechar(dev->port, 0x00);
 
     // Check results
     if(!check_result(dev, "Text drawing failed.")) {
@@ -335,8 +348,8 @@ int ulcd_draw_text(ulcd_dev *dev,
 
 int ulcd_set_volume(ulcd_dev *dev, uint8_t volume) {
     // Commands
-    SendByte(dev->port, 0x76);
-    SendByte(dev->port, volume);
+    writechar(dev->port, 0x76);
+    writechar(dev->port, volume);
 
     // Check results
     if(!check_result(dev, "Sound volume setting failed.")) {
@@ -347,11 +360,11 @@ int ulcd_set_volume(ulcd_dev *dev, uint8_t volume) {
 
 int ulcd_audio_play(ulcd_dev *dev, const char* file) {
     // Commands
-    SendByte(dev->port, 0x40);
-    SendByte(dev->port, 0x6C);
-    SendByte(dev->port, 0x01);
-    SendBuf(dev->port, (unsigned char*)file, strlen(file));
-    SendByte(dev->port, 0x00);
+    writechar(dev->port, 0x40);
+    writechar(dev->port, 0x6C);
+    writechar(dev->port, 0x01);
+    serial_write(dev->port, file, strlen(file));
+    writechar(dev->port, 0x00);
 
     // Check results
     if(!check_result(dev, "Sound playback failed.")) {
@@ -362,10 +375,10 @@ int ulcd_audio_play(ulcd_dev *dev, const char* file) {
 
 int ulcd_audio_stop(ulcd_dev *dev) {
     // Commands
-    SendByte(dev->port, 0x40);
-    SendByte(dev->port, 0x6C);
-    SendByte(dev->port, 0x02);
-    SendByte(dev->port, 0x00);
+    writechar(dev->port, 0x40);
+    writechar(dev->port, 0x6C);
+    writechar(dev->port, 0x02);
+    writechar(dev->port, 0x00);
 
     // Check results
     if(!check_result(dev, "Sound playback stop failed.")) {
@@ -378,10 +391,10 @@ int ulcd_audio_stop(ulcd_dev *dev) {
 
 int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen) {
     // Commands
-    SendByte(dev->port, 0x40);
-    SendByte(dev->port, 0x64);
-    SendBuf(dev->port, (unsigned char*)filter, strlen(filter));
-    SendByte(dev->port, 0x00);
+    writechar(dev->port, 0x40);
+    writechar(dev->port, 0x64);
+    serial_write(dev->port, filter, strlen(filter));
+    writechar(dev->port, 0x00);
 
     // Some vars
     int run = 1;
