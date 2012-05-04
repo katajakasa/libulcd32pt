@@ -75,6 +75,7 @@ void ulcd_wait_event(ulcd_dev *dev, ulcd_event *event);
 
 int ulcd_set_volume(ulcd_dev *dev, uint8_t volume);
 int ulcd_audio_play(ulcd_dev *dev, const char* file);
+int ulcd_audio_stop(ulcd_dev *dev);
 
 // SD Card
 

@@ -360,9 +360,22 @@ int ulcd_audio_play(ulcd_dev *dev, const char* file) {
     return 1;
 }
 
+int ulcd_audio_stop(ulcd_dev *dev) {
+    // Commands
+    SendByte(dev->port, 0x40);
+    SendByte(dev->port, 0x6C);
+    SendByte(dev->port, 0x02);
+    SendByte(dev->port, 0x00);
+
+    // Check results
+    if(!check_result(dev, "Sound playback stop failed.")) {
+        return 0;
+    }
+    return 1;
+}
+
 // SD Card
 
-// TODO: FIXME
 int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen) {
     // Commands
     SendByte(dev->port, 0x40);
