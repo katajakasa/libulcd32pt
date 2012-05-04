@@ -37,6 +37,12 @@ Example
             printf("Error: %s\n", ulcd_get_error_str());
         }
 
+        // Try to play stuff from the MMC
+        ulcd_set_volume(dev, ULCD_VOLUME_MAX);
+        if(!ulcd_audio_play(dev, "ONLINE.WAV")) {
+            printf("Error: %s\n", ulcd_get_error_str());
+        }
+        
         // Test drawing
         ulcd_pen_style(dev, ULCD_PEN_WIREFRAME);
         ulcd_draw_text(dev, "OMG!", 0, 200, 2, alloc_color(0.9, 0.9, 0.9));
