@@ -362,6 +362,7 @@ int ulcd_audio_play(ulcd_dev *dev, const char* file) {
 
 // SD Card
 
+// TODO: FIXME
 int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen) {
     // Commands
     SendByte(dev->port, 0x40);
@@ -369,23 +370,32 @@ int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen) {
     SendBuf(dev->port, (unsigned char*)filter, strlen(filter));
     SendByte(dev->port, 0x00);
 
-    // Read names
+    // Some vars
+    int run = 1;
     int pos = 0;
-    char in = readchar(dev->port);
-    if(in != 0x06 && in != 0x15) {
-        buffer[pos++] = in;
-        while((in = readchar(dev->port)) != 0x0A) {
-            if(pos < buflen) {
-                buffer[pos++] = in;
-            }
-        }
+    char last = 0;
+    char in;
 
-        // Check results
-        if((in = readchar(dev->port)) != 0x06) {
-            sprintf(errorstr, "Directory listing failed.");
+    // Get much data! MMMMmmmm.... daaaataaaaa....
+    while(run) {
+        in = readchar(dev->port);
+        if(in == 0x06 && last == 0) {
+            return pos;
         }
-    } else if(in != 0x06) {
-        sprintf(errorstr, "Directory listing failed.");
+        if(in == 0x06 && last == 0x0A) {
+            return pos;
+        }
+        if(in == 0x15 && (last == 0x0A || last == 0)) {
+            sprintf(errorstr, "Directory listing failed.");
+            return pos;
+        }
+        if(in == 0x0A) {
+            buffer[pos++] = ',';
+            last = in;
+            continue;
+        }
+        buffer[pos++] = in;
+        last = in;
     }
 
     return pos;
