@@ -24,6 +24,19 @@ enum PEN_STYLES {
     ULCD_PEN_WIREFRAME = 0x01,
 };
 
+// Audio
+
+enum {
+    ULCD_VOLUME_MIN = 0x08,
+    ULCD_VOLUME_MAX = 0x7F,
+    ULCD_VOLUME_UP = 0xFD,
+    ULCD_VOLUME_UP_8 = 0xFE,
+    ULCD_VOLUME_DOWN = 0x03,
+    ULCD_VOLUME_DOWN_8 = 0x01,
+    ULCD_VOLUME_MUTE = 0x00,
+    ULCD_VOLUME_UNMUTE = 0xFF,
+};
+
 // Events
 
 enum EVENT_TYPES {
@@ -57,6 +70,15 @@ int ulcd_toggle_backlight(ulcd_dev *dev, int toggle);
 
 void ulcd_get_event(ulcd_dev *dev, ulcd_event *event);
 void ulcd_wait_event(ulcd_dev *dev, ulcd_event *event);
+
+// Audio
+
+int ulcd_set_volume(ulcd_dev *dev, uint8_t volume);
+int ulcd_audio_play(ulcd_dev *dev, const char* file);
+
+// SD Card
+
+int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen);
 
 // Drawing
 

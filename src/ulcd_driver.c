@@ -331,6 +331,66 @@ int ulcd_draw_text(ulcd_dev *dev,
     return 1;
 }
 
+// Audio
+
+int ulcd_set_volume(ulcd_dev *dev, uint8_t volume) {
+    // Commands
+    SendByte(dev->port, 0x76);
+    SendByte(dev->port, volume);
+
+    // Check results
+    if(!check_result(dev, "Sound volume setting failed.")) {
+        return 0;
+    }
+    return 1;
+}
+
+int ulcd_audio_play(ulcd_dev *dev, const char* file) {
+    // Commands
+    SendByte(dev->port, 0x40);
+    SendByte(dev->port, 0x6C);
+    SendByte(dev->port, 0x01);
+    SendBuf(dev->port, (unsigned char*)file, strlen(file));
+    SendByte(dev->port, 0x00);
+
+    // Check results
+    if(!check_result(dev, "Sound playback failed.")) {
+        return 0;
+    }
+    return 1;
+}
+
+// SD Card
+
+int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen) {
+    // Commands
+    SendByte(dev->port, 0x40);
+    SendByte(dev->port, 0x64);
+    SendBuf(dev->port, (unsigned char*)filter, strlen(filter));
+    SendByte(dev->port, 0x00);
+
+    // Read names
+    int pos = 0;
+    char in = readchar(dev->port);
+    if(in != 0x06 && in != 0x15) {
+        buffer[pos++] = in;
+        while((in = readchar(dev->port)) != 0x0A) {
+            if(pos < buflen) {
+                buffer[pos++] = in;
+            }
+        }
+
+        // Check results
+        if((in = readchar(dev->port)) != 0x06) {
+            sprintf(errorstr, "Directory listing failed.");
+        }
+    } else if(in != 0x06) {
+        sprintf(errorstr, "Directory listing failed.");
+    }
+
+    return pos;
+}
+
 // Some utility stuff
 
 float clamp(float v, float to) {
