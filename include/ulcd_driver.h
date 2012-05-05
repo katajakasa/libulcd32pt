@@ -86,12 +86,16 @@ int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen);
 // Drawing
 
 int ulcd_blit(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char* data);
+int ulcd_draw_pixel(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t color);
+int ulcd_draw_ellipse(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t xrad, uint16_t yrad, uint16_t color);
 int ulcd_draw_line(ulcd_dev *dev, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
 int ulcd_draw_rect(ulcd_dev *dev, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
 int ulcd_draw_circle(ulcd_dev *dev, uint16_t x, uint16_t y, uint16_t radius, uint16_t color);
 int ulcd_draw_text(ulcd_dev *dev, const char* text, int x, int y, int font, uint16_t color);
 int ulcd_pen_style(ulcd_dev *dev, int style);
 uint16_t alloc_color(float r, float g, float b);
+
+uint16_t ulcd_read_pixel(ulcd_dev *dev, uint16_t x, uint16_t y);
 
 #ifdef __cplusplus
 } /* extern "C" */

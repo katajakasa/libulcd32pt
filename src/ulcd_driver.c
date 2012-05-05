@@ -308,6 +308,47 @@ int ulcd_pen_style(ulcd_dev *dev, int style) {
     return 1;
 }
 
+int ulcd_draw_pixel(ulcd_dev *dev,
+                    uint16_t x, uint16_t y,
+                    uint16_t color) {
+    char buf[7];
+    buf[0] = 0x50;
+    buf[1] = x >> 8;
+    buf[2] = x & 0xFF;
+    buf[3] = y >> 8;
+    buf[4] = y & 0xFF;
+    buf[5] = color >> 8;
+    buf[6] = color & 0xFF;
+    serial_write(dev->port, buf, 7);
+    if(!check_result(dev, "Error while drawing pixel.")) {
+        return 0;
+    }
+    return 1;
+}
+
+int ulcd_draw_ellipse(ulcd_dev *dev,
+                      uint16_t x, uint16_t y,
+                      uint16_t xrad, uint16_t yrad,
+                      uint16_t color) {
+    char buf[11];
+    buf[0] = 0x65;
+    buf[1] = x >> 8;
+    buf[2] = x & 0xFF;
+    buf[3] = y >> 8;
+    buf[4] = y & 0xFF;
+    buf[5] = xrad >> 8;
+    buf[6] = xrad & 0xFF;
+    buf[7] = yrad >> 8;
+    buf[8] = yrad & 0xFF;
+    buf[9] = color >> 8;
+    buf[10] = color & 0xFF;
+    serial_write(dev->port, buf, 11);
+    if(!check_result(dev, "Error while drawing pixel.")) {
+        return 0;
+    }
+    return 1;
+}
+
 int ulcd_draw_text(ulcd_dev *dev,
                    const char* text,
                    int x, int y,
@@ -340,6 +381,17 @@ int ulcd_draw_text(ulcd_dev *dev,
         return 0;
     }
     return 1;
+}
+
+uint16_t ulcd_read_pixel(ulcd_dev *dev, uint16_t x, uint16_t y) {
+    char buf[5];
+    buf[0] = 0x52;
+    buf[1] = x >> 8;
+    buf[2] = x & 0xFF;
+    buf[3] = y >> 8;
+    buf[4] = y & 0xFF;
+    serial_write(dev->port, buf, 11);
+    return read_word(dev);
 }
 
 // Audio
