@@ -19,7 +19,7 @@ Example
         ulcd_dev *dev;
 
         // Initialize LCD on com port 3
-        dev = ulcd_init(2);
+        dev = ulcd_init("COM3"); // On linux eg. "/dev/ttyUSB0" etc.
         if(!dev) {
             printf("Error while initializing display: %s\n", ulcd_get_error_str());
             return 0;
