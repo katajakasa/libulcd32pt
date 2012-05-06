@@ -90,8 +90,9 @@ int serial_write(serial_port *port, const char* buffer, int len) {
 
 /**
   * Opens the serial port
-  * @param settings Filled SerialSettings struct
-  * @return serial_port object, or 0 in case of failure.
+  * @param device Device name, eg. COM1 or /dev/ttyUSB0.
+  * @param speed Baudrate for the device, eg. SERIAL_9600 etc.
+  * @return serial_port object if success, 0 in case of failure.
   */
 serial_port* serial_open(const char* device, int speed) {
     serial_port *port;

@@ -21,9 +21,9 @@
 		<Compiler>
 			<Add directory="include\" />
 		</Compiler>
-		<Unit filename="include\rs232.h" />
+		<Unit filename="include\serial.h" />
 		<Unit filename="include\ulcd_driver.h" />
-		<Unit filename="src\rs232.c">
+		<Unit filename="src\serial.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\ulcd_driver.c">

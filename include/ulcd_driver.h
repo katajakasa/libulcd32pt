@@ -81,7 +81,12 @@ int ulcd_audio_stop(ulcd_dev *dev);
 
 // SD Card
 
-int ulcd_list_dir(ulcd_dev *dev, const char *filter, char *buffer, int buflen);
+int ulcd_sd_write(ulcd_dev *dev, const char *file, const char* data, int len);
+int ulcd_sd_read(ulcd_dev *dev, const char *file, char* data, int read);
+int ulcd_sd_list(ulcd_dev *dev, const char *filter, char *buffer, int buflen);
+int ulcd_sd_erase(ulcd_dev *dev, const char *file);
+int ulcd_sd_image_save(ulcd_dev *dev, const char *file, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+int ulcd_sd_image_load(ulcd_dev *dev, const char *file, uint16_t x, uint16_t y);
 
 // Drawing
 
