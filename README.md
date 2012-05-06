@@ -9,6 +9,16 @@ License
 -------
 MIT. Read LICENSE for more detailed information.
 
+Todo
+----
+* Documentation
+* Implement ulcd_sd_write
+* Implement ulcd_sd_read
+* ulcd_sd_list is kind of ugly, fix it.
+* Implement sleep functions
+* Implement raw SD handling
+* Power management only partially implemented.
+
 Example
 -------
 

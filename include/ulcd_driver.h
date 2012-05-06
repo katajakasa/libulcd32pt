@@ -11,7 +11,7 @@ extern "C" {
 
 typedef struct serial_port serial_port;
 
-typedef struct {
+typedef struct ulcd_dev {
     serial_port *port;
     char name[16];
     int type;
