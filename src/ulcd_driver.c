@@ -447,6 +447,18 @@ int ulcd_audio_stop(ulcd_dev *dev) {
 
 // SD Card
 
+int ulcd_sd_init(ulcd_dev *dev) {
+    // Commands
+    write_char(dev, 0x40);
+    write_char(dev, 0x69);
+
+    // Check results
+    if(!check_result(dev, "Could not initialize SD card.")) {
+        return 0;
+    }
+    return 1;
+}
+
 // TODO: Ugly, might want to revisit this ...
 int ulcd_sd_list(ulcd_dev *dev, const char *filter, char *buffer, int buflen) {
     // Commands
